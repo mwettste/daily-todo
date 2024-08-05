@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { dev } from '$app/environment';
 	import { Replicache, type WriteTransaction } from 'replicache';
+	import { flip } from 'svelte/animate';
+	import './app.css';
 
 	type Todo = {
 		id: number;
@@ -38,7 +40,9 @@
 				return todos.map(([_, values]) => values as Todo);
 			},
 			(items: Todo[]) => {
-				todos = items;
+				todos = items
+					.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0))
+					.sort((a, b) => (a.completed === b.completed ? 0 : a.completed ? 1 : -1));
 			}
 		);
 	});
@@ -71,20 +75,101 @@
 </form>
 
 <ul>
-	{#each todos as todo}
-		<li class:completed={todo.completed}>
+	{#each todos as todo (todo.id)}
+		<li animate:flip={{ duration: 200 }} class:completed={todo.completed}>
 			<span>{todo.name}</span>
-			<button onclick={() => toggle(todo)}>✔</button>
+			<button class="check" onclick={() => toggle(todo)}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="40px" height="100%" viewBox="0 0 32 32"
+					><title>c-check</title><g fill="var(--fg)" stroke-linejoin="miter" stroke-linecap="butt"
+						><circle
+							cx="16"
+							cy="16"
+							r="14"
+							fill="none"
+							stroke="var(--fg)"
+							stroke-linecap="square"
+							stroke-miterlimit="10"
+							stroke-width="2"
+						></circle><polyline
+							points="9 17 13 21.5 23 10"
+							fill="none"
+							stroke="var(--fg)"
+							stroke-linecap="square"
+							stroke-miterlimit="10"
+							stroke-width="2"
+						></polyline></g
+					></svg
+				>
+			</button>
 		</li>
 	{/each}
 </ul>
 
 <style>
-	.completed {
-		opacity: 0.5;
-		text-decoration: line-through;
+	label {
+		display: block;
 	}
+
+	.completed {
+		opacity: 0.3;
+		transition: opacity 0.2s ease;
+		&:hover {
+			opacity: 1;
+		}
+		span {
+			position: relative;
+			&:after {
+				content: '';
+				position: absolute;
+				display: block;
+				height: 6px;
+				background: #333;
+				top: 50%;
+				left: 0;
+				width: 100%;
+			}
+		}
+	}
+
+	.check {
+		padding: 0;
+		background: transparent;
+		border: none;
+		display: flex;
+		align-items: center;
+	}
+
 	li {
-		margin-bottom: 5px;
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		font-size: var(--fs-l);
+		& + li {
+			margin-top: 0.5rem;
+		}
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	form {
+		margin-bottom: 1rem;
+		input,
+		button {
+			font-size: var(--fs-l);
+			background: transparent;
+			border: none;
+			transition: 0.2s ease background;
+			&:hover {
+				background: var(--tint-or-shade);
+			}
+		}
+
+		input {
+			border-bottom: 0.5px solid var(--fg);
+		}
 	}
 </style>
